@@ -4,3 +4,11 @@
 *.jar
 *.war
 *.ear
+
+/classes
+/target
+/logs
+
+.project
+.classpath
+.settings

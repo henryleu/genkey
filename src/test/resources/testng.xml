@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="real-platform-key" verbose="10" parallel="methods" thread-count="2">
+<!--
+	<listeners>
+	   <listener class-name="priority.PriorityInterceptor" />
+	</listeners>
+-->
+    <test name="all" >
+		<groups>
+			<run>
+			</run>
+		</groups>
+		<packages>
+           <package name="com.realpaas.platform.key.*" />
+		</packages>
+    </test>
+
+</suite>
