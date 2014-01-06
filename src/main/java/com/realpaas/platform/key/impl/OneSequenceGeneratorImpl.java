@@ -1,7 +1,10 @@
 /**
  * Copyright (c) 2012, RealPaaS Technologies, Ltd. All rights reserved.
  */
-package com.realpaas.platform.key;
+package com.realpaas.platform.key.impl;
+
+import com.realpaas.platform.key.KeyedSequenceGenerator;
+import com.realpaas.platform.key.OneSequenceGenerator;
 
 /**
  * <p>
@@ -44,30 +47,28 @@ package com.realpaas.platform.key;
  * </dl>
  * @author	henryleu Email/MSN: hongli_leu@126.com
  */
-public class PartitionedSequenceGeneratorImpl implements PartitionedSequenceGenerator {
+public class OneSequenceGeneratorImpl implements OneSequenceGenerator {
 
-    public static final String DEFAULT_PARTITION_KEY = "default";
+    public static final String DEFAULT_SEQUENCE_KEY = "default";
     
-    private String partitionKey = DEFAULT_PARTITION_KEY;
+    private String sequenceKey = DEFAULT_SEQUENCE_KEY;
     
     private KeyedSequenceGenerator keyedSequenceGenerator;
     
-    public void setPartitionKey(String partitionKey) {
-        this.partitionKey = partitionKey;
+    public void setSequenceKey(String sequenceKey) {
+        this.sequenceKey = sequenceKey;
     }
 
     public void setKeyedSequenceGenerator(KeyedSequenceGenerator keyedSequenceGenerator) {
         this.keyedSequenceGenerator = keyedSequenceGenerator;
     }
 
+    /* (non-Javadoc)
+     * @see com.realpaas.platform.key.OneSequenceGenerator#nextValue()
+     */
     @Override
     public long nextValue() {
-        return keyedSequenceGenerator.nextValue( partitionKey );
+        return keyedSequenceGenerator.nextValue( sequenceKey );
     }
 
-    @Override
-    public long nextValue(String key) {
-        return keyedSequenceGenerator.nextValue( partitionKey + "." + key );
-    }
-    
 }

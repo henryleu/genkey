@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2012, RealPaaS Technologies, Ltd. All rights reserved.
  */
-package com.realpaas.platform.key;
+package com.realpaas.platform.key.impl;
 
 /**
  * <p>
@@ -38,34 +38,32 @@ package com.realpaas.platform.key;
  * 	Date		Author		Action
  * </dd>
  * <dd>
- * 	2012-7-13	henryleu	Create the class
+ * 	2014-1-6	henryleu	Create the class
  * </dd>
  * 
  * </dl>
  * @author	henryleu Email/MSN: hongli_leu@126.com
  */
-public class OneSequenceGeneratorImpl implements OneSequenceGenerator {
-
-    public static final String DEFAULT_SEQUENCE_KEY = "default";
+public interface SequenceObjectPersister {
     
-    private String sequenceKey = DEFAULT_SEQUENCE_KEY;
-    
-    private KeyedSequenceGenerator keyedSequenceGenerator;
-    
-    public void setSequenceKey(String sequenceKey) {
-        this.sequenceKey = sequenceKey;
-    }
-
-    public void setKeyedSequenceGenerator(KeyedSequenceGenerator keyedSequenceGenerator) {
-        this.keyedSequenceGenerator = keyedSequenceGenerator;
-    }
-
-    /* (non-Javadoc)
-     * @see com.realpaas.platform.key.OneSequenceGenerator#nextValue()
+    /**
+     * Load a sequence object info in Storage, and create a sequence object with the loaded info,
+     * then the object.
+     * @param storedKey sequence key in storage
      */
-    @Override
-    public long nextValue() {
-        return keyedSequenceGenerator.nextValue( sequenceKey );
-    }
-
+    public SequenceObject loadSequenceObject(String storedKey);
+    
+    /**
+     * Crate a new sequence object info in Storage with the sequence key and initial value
+     * @param storedKey
+     * @param value
+     */
+    public void createSequenceObject(String storedKey, Long value);
+    
+    /**
+     * Get and update sequence object in DB, and copy to sequence object in Cache  
+     * @param storedKey
+     * @param cachedSo
+     */
+    public void updateSequenceObject(String storedKey, SequenceObject cachedSo);
 }

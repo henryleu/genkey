@@ -67,7 +67,7 @@
     </bean>
 
     <!-- High Performance Sequence Generator -->
-    <bean id="keyedSequenceGenerator" class="com.realpaas.platform.key.KeyedSequenceGeneratorImpl" init-method="init">
+    <bean id="keyedSequenceGenerator" class="com.realpaas.platform.key.impl.KeyedSequenceGeneratorImpl" init-method="init">
         <property name="dataSource"><ref local="dataSource"/></property>
         <property name="sequenceSchemaName"><value>${ds.main.schema}</value></property>
         <property name="sequenceTableName"><value>PLF_SEQUENCE_REGISTRY</value></property>
@@ -75,12 +75,12 @@
         <property name="increment"><value>1000</value></property>
     </bean>
 
-    <bean id="oneSequenceGenerator" class="com.realpaas.platform.key.OneSequenceGeneratorImpl" >
+    <bean id="oneSequenceGenerator" class="com.realpaas.platform.key.impl.OneSequenceGeneratorImpl" >
         <property name="sequenceKey"><value>realpaas</value></property>
         <property name="keyedSequenceGenerator"><ref local="keyedSequenceGenerator"/></property>
     </bean>
     
-    <bean id="partitionedSequenceGenerator" class="com.realpaas.platform.key.PartitionedSequenceGeneratorImpl" >
+    <bean id="partitionedSequenceGenerator" class="com.realpaas.platform.key.impl.PartitionedSequenceGeneratorImpl" >
         <property name="partitionKey"><value>test</value></property>
         <property name="keyedSequenceGenerator"><ref local="keyedSequenceGenerator"/></property>
     </bean>

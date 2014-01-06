@@ -1,23 +1,22 @@
 /**
  * Copyright (c) 2012, RealPaaS Technologies, Ltd. All rights reserved.
  */
-package com.realpaas.platform.key;
+package com.realpaas.platform.key.impl.rdbms;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.realpaas.platform.key.SequenceGeneratorException;
+import com.realpaas.platform.key.impl.SequenceObject;
+import com.realpaas.platform.key.impl.SequenceObjectPersister;
 
 /**
  * <p>
@@ -54,17 +53,14 @@ import org.apache.commons.logging.LogFactory;
  * 	Date		Author		Action
  * </dd>
  * <dd>
- * 	2012-7-13	henryleu	Create the class
+ * 	2014-1-6	henryleu	Create the class
  * </dd>
  * 
  * </dl>
  * @author	henryleu Email/MSN: hongli_leu@126.com
  */
-public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
-    private static final long DEFAULT_INIT_VALUE = 1;
-    private static final int DEFAULT_INCREMENT = 1000;
-    private static final int MIN_INCREMENT = 10;
-    
+public class SequenceObjectPersisterImpl implements SequenceObjectPersister{
+
     private static final String SEQUENCE_TABLE_NAME = "PLF_SEQUENCE_REGISTRY";
     private static final String SEQUENCE_NAME = "SEQ_NAME";
     private static final String SEQUENCE_VALUE = "SEQ_VALUE";
@@ -73,162 +69,15 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
     private DataSource dataSource;
     private String sequenceSchemaName = "";
     private String sequenceTableName = SEQUENCE_TABLE_NAME;
-    private long initValue = DEFAULT_INIT_VALUE;
-    private int increment = DEFAULT_INCREMENT;
-    private int preIncrement = DEFAULT_INCREMENT / 2;
-
-    private boolean disableLogging = true;
-    private ConcurrentMap<String, SequenceObject> sequenceCache;
-
+    
     private String insertSql;
     private String updateSql;
     private String selectSql;
     
     private final Log logger = LogFactory.getLog(getClass());
-    private final Random random = new Random( System.currentTimeMillis() );
-    private final static int attemptTimes = 3;
-    private final static int constantMillisBeforeAttempt = 100;
-    private final static int maxRandomMillisBeforeAttempt = 500;
-    
-    static class SequenceObject {
-        private final String key;
-        
-        private final AtomicLong pointer;
-        
-        private final AtomicLong valve;
-        
-        private final AtomicBoolean loaded;
-        
-        public SequenceObject(String key, long pointer, long valve) {
-            super();
-            this.key = key;
-            this.pointer = new AtomicLong( pointer );
-            this.valve = new AtomicLong( valve );
-            this.loaded = new AtomicBoolean( false );
-        }
-        
-        public String getKey() {
-            return key;
-        }
-        
-        public long getPointer() {
-            return pointer.get();
-        }
-        
-        public void setPointer(long pointer) {
-            this.pointer.set( pointer );
-        }
-        
-        public long getValve() {
-            return valve.get();
-        }
-        
-        public void setValve(long valve) {
-            this.valve.set( valve );
-        }
-        
-        public boolean getLoaded() {
-            return loaded.get();
-        }
 
-        public void setLoaded() {
-            loaded.set( true );
-        }
+    private boolean disableLogging = true;
 
-        public long nextValue() {
-            return pointer.incrementAndGet();
-        }
-        
-        public void syncWith(SequenceObject newSo){
-            setPointer( newSo.getPointer() );
-            setValve( newSo.getValve() );
-        }
-        
-        /**
-         * @param preIncrement
-         * @return
-         */
-        public boolean reachValve(int preIncrement) {
-            /*
-             * reach valve is value
-             * considering multiple thread access, use >= instead of ==
-             */
-            return pointer.get() == valve.get();
-        }
-        
-        /**
-         * step forward: increase the valve with increment and return the result.
-         * @param increment a pace to step
-         * @return return the new valve value
-         */
-        public long step(long increment) {
-            return valve.addAndGet( increment );
-        }
-    }
-    
-    public KeyedSequenceGeneratorImpl() {
-        sequenceCache = new ConcurrentHashMap<String, SequenceObject>();
-    }
-    
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-    
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-    
-    public String getSequenceSchemaName() {
-        return sequenceSchemaName;
-    }
-
-    public void setSequenceSchemaName(String sequenceSchemaName) {
-        this.sequenceSchemaName = sequenceSchemaName;
-    }
-
-    public String getSequenceTableName() {
-        return sequenceTableName;
-    }
-
-    public void setSequenceTableName(String sequenceTableName) {
-        this.sequenceTableName = sequenceTableName;
-    }
-    
-    public long getInitValue() {
-        return initValue;
-    }
-    
-    public void setInitValue(long initValue) {
-        this.initValue = initValue;
-    }
-    
-    public int getIncrement() {
-        return increment;
-    }
-    
-    public void setIncrement(int increment) {
-        if(increment< MIN_INCREMENT){
-            throw new IllegalArgumentException( "Property \"increment\" [" + increment + "] should be greater than or equal to " + MIN_INCREMENT );
-        }
-        
-        this.increment = increment;
-    }
-    
-    public int getPreIncrement() {
-        return preIncrement;
-    }
-    
-    public void setPreIncrement(int preIncrement) {
-        this.preIncrement = preIncrement;
-    }
-    
-    public boolean isDisableLogging() {
-        return disableLogging;
-    }
-
-    public void setDisableLogging(boolean disableLogging) {
-        this.disableLogging = disableLogging;
-    }
 
     public void init(){
         insertSql = makeInsertSql();
@@ -236,134 +85,8 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
         selectSql = makeSelectSql();        
     }
     
-    public void afterPropertiesSet() throws Exception {
-        init();
-    }
-
-    @SuppressWarnings("static-access")
     @Override
-    public long nextValue(String key) {
-        int waitBeforeAttempt = 0;
-        long nextValue = 0;
-        
-        try {
-            nextValue = doGetNextValue( key );
-        }
-        catch (SequenceGeneratorException e) {
-            logger.warn("Fail to attempt to get next value", e);
-            for(int i = 1; i < attemptTimes; i++) {
-                try {
-                    waitBeforeAttempt = constantMillisBeforeAttempt + random.nextInt( maxRandomMillisBeforeAttempt );
-                    Thread.currentThread().sleep( waitBeforeAttempt );
-                    nextValue = doGetNextValue( key );
-                    return nextValue;
-                }
-                catch (SequenceGeneratorException internalE) {
-                    logger.warn("Fail to attempt to get next value", internalE);
-                }
-                catch (Exception internalE) {
-                    logger.warn("Fail to attempt to get next value", internalE);
-                }
-            }
-            throw new SequenceGeneratorException( "After " + attemptTimes + " Attempts, Fail to get next value" );
-        }
-        catch (Exception e) {
-            logger.error("Fail to get next value after tried " + attemptTimes + " times", e);
-            throw new SequenceGeneratorException(e);
-        }
-        
-        return nextValue;
-    }
-
-    private long doGetNextValue(String key) {
-        String storedKey = key;
-        SequenceObject so = getOrCreateSequenceObject( storedKey );
-        long nextValue = -1;
-        
-        /*
-         * the SequenceObject of the key is not in in Cache, so it need to 
-         * be created or loaded from DB
-         */
-        if( !so.getLoaded() ) {
-            synchronized( so ){
-                SequenceObject storedSo = getSequenceObject(storedKey);
-                if(storedSo == null) {
-                    
-                    /*
-                     * Create the SequenceObject of the key in DB
-                     */
-                    createSequenceObject( storedKey, so.getValve() );
-                }
-                else {
-                    /*
-                     * Get and update the SequenceObject of the key when loading it from key
-                     * table in DB since last time platform reset
-                     */
-                    updateSequenceObject( storedKey, storedSo );
-                    so.syncWith( storedSo );
-                }
-                
-                /*
-                 * Set loaded flag to true after create/update SequenceObject in DB for 
-                 * the first time when platform launches
-                 */
-                so.setLoaded();
-            }
-        }
-        else { // the SequenceObject of the key has already been in Cache
-            /*
-             * Check if next value reaches the valve of the key in this
-             * pre-increment in advance, if yes, increase and update the valve
-             * of the key in Cache and DB.
-             */
-            if( so.reachValve( getPreIncrement() ) ) {
-                synchronized( so ){
-                    updateSequenceObject( storedKey, so );
-                }
-            }
-        }
-
-        /*
-         * Get current value and roll next
-         */
-        nextValue = so.nextValue();
-        
-        if( !isDisableLogging() && logger.isDebugEnabled()) {
-            logger.debug("Sequence [ key=\"" + key + "\", value=" + nextValue + " ]");
-        }
-        
-        return nextValue;
-    }
-
-    /**
-     * if no key-matched SO in Cache, create initial one and put it to Cache if it is absent,
-     * or return it directly from Cache.
-     * <p>Newly created SO's loaded flag is set to false
-     * @param storedKey SO's Key
-     * @return SequenceObject object.
-     */
-    private SequenceObject getOrCreateSequenceObject(final String storedKey) {
-        SequenceObject so = sequenceCache.get( storedKey );
-        if( so==null ){
-            so = instantiateInitialSequenceObject( storedKey );
-            SequenceObject previousOne = sequenceCache.putIfAbsent( storedKey, so );
-            if( previousOne!=null ){
-                so = previousOne;
-            }
-        }
-        return so;
-    }
-    
-    /**
-     * Instantiate a initial SO with initial pointer, valve and loaded properties. 
-     * @param storedKey SO's Key
-     * @return newly created SequenceObject object
-     */
-    private SequenceObject instantiateInitialSequenceObject(final String storedKey) {
-        return new SequenceObject( storedKey, getInitValue(), getInitValue() + getIncrement() );
-    }
-    
-    private SequenceObject getSequenceObject(String storedKey) {
+    public SequenceObject loadSequenceObject(String storedKey) {
         SequenceObject so = null;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -448,8 +171,9 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
         
         return so;
     }
-    
-    private void createSequenceObject(String storedKey, Long value) {
+
+    @Override
+    public void createSequenceObject(String storedKey, Long value) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         boolean autoCommit = true;
@@ -531,14 +255,9 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
             close(connection, preparedStatement, null);
         }
     }
-    
-    
-    /**
-     * Get and update sequence object in DB, and copy to sequence object in Cache  
-     * @param storedKey
-     * @param cachedSo
-     */
-    private void updateSequenceObject(String storedKey, SequenceObject cachedSo) {
+
+    @Override
+    public void updateSequenceObject(String storedKey, SequenceObject cachedSo) {
         SequenceObject so = null;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -579,7 +298,7 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
             rs = preparedStatement.executeQuery();
             final long version;
             if(rs.next()) {
-                so = new SequenceObject( storedKey, rs.getLong(1), rs.getLong(1) );
+                so = new SequenceObject( storedKey, rs.getLong(1), rs.getLong(1) ); //TODO: set increment value loaded from storage
                 version = rs.getLong(2);
             }
             else {
@@ -592,7 +311,7 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
                 logger.debug(updateSql);
             }
             
-            long valve = so.step( getIncrement() );
+            long valve = so.step( so.getIncrement() ); //TODO: remove the parameter instead of calculating it in SequenceObject internally
             preparedStatement = connection.prepareStatement(updateSql);
             preparedStatement.setLong(1, valve);
             preparedStatement.setLong(2, version+1);
@@ -650,6 +369,38 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
         cachedSo.setValve( so.getValve() );
     }
 
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+    
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+    
+    public String getSequenceSchemaName() {
+        return sequenceSchemaName;
+    }
+
+    public void setSequenceSchemaName(String sequenceSchemaName) {
+        this.sequenceSchemaName = sequenceSchemaName;
+    }
+
+    public String getSequenceTableName() {
+        return sequenceTableName;
+    }
+
+    public void setSequenceTableName(String sequenceTableName) {
+        this.sequenceTableName = sequenceTableName;
+    }
+    
+    public void setDisableLogging(boolean disableLogging) {
+        this.disableLogging = disableLogging;
+    }
+    
+    private boolean isDisableLogging() {
+        return disableLogging;
+    }
+    
     private String makeInsertSql(){
         StringBuilder sbSql = new StringBuilder(100);
         sbSql.append("INSERT INTO ");
@@ -743,4 +494,5 @@ public class KeyedSequenceGeneratorImpl implements KeyedSequenceGenerator{
             logger.error(strError, e);
         }
     }
+
 }
