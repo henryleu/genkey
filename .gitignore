@@ -1,14 +1,19 @@
-*.class
+# OS and IDE Files #
+*.DS_Store
+/.settings
+/.classpath
+/.project
 
-# Package Files #
+# Package and Build Files #
 *.jar
 *.war
 *.ear
-
-/classes
+*.class
+/javadoc.xml
 /target
+/bin
+/classes
+/dist
 /logs
 
-.project
-.classpath
-.settings
+
