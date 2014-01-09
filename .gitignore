@@ -9,6 +9,7 @@
 *.war
 *.ear
 *.class
+*.log
 /javadoc.xml
 /target
 /bin
