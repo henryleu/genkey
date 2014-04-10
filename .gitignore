@@ -1,8 +1,11 @@
 # OS and IDE Files #
-*.DS_Store
+.DS_Store
 /.settings
 /.classpath
 /.project
+/.idea
+/*.iml
+.svn
 
 # Package and Build Files #
 *.jar
