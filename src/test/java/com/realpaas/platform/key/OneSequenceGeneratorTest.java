@@ -102,7 +102,7 @@ public class OneSequenceGeneratorTest extends AbstractTest{
 
             @Override
             protected void processResult() {
-                //System.out.println( "It took " + took + " milliseconds to run the task" );
+                System.out.println( "It took " + took + " milliseconds to run the task" );
             }
         }
         

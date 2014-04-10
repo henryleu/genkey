@@ -15,7 +15,7 @@
 
     <name>genkey</name>
     <description>genkey is a Sequence Generating framework/util which implements a pattern which Martin Fowler suggests in his book "Patterns of Enterprise Application Architecture"</description>
-    <url>https://github.com/henryleu/genkey</url>
+    <url>https://github.com/realpaas/genkey</url>
 
     <properties>
     </properties>

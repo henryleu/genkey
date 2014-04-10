@@ -68,11 +68,15 @@
 
     <!-- High Performance Sequence Generator -->
     <bean id="keyedSequenceGenerator" class="com.realpaas.platform.key.impl.KeyedSequenceGeneratorImpl" init-method="init">
+        <property name="persister"><ref local="sequenceObjectPersister"/></property>
+        <property name="initValue"><value>0</value></property>
+        <property name="increment"><value>1000</value></property>
+    </bean>
+
+    <bean id="sequenceObjectPersister" class="com.realpaas.platform.key.impl.rdbms.SequenceObjectPersisterImpl" init-method="init">
         <property name="dataSource"><ref local="dataSource"/></property>
         <property name="sequenceSchemaName"><value>${ds.main.schema}</value></property>
         <property name="sequenceTableName"><value>PLF_SEQUENCE_REGISTRY</value></property>
-        <property name="initValue"><value>0</value></property>
-        <property name="increment"><value>1000</value></property>
     </bean>
 
     <bean id="oneSequenceGenerator" class="com.realpaas.platform.key.impl.OneSequenceGeneratorImpl" >
