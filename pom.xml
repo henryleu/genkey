@@ -20,6 +20,12 @@
     <properties>
     </properties>
 
+    <scm>
+        <connection>scm:git:git://github.com/realpaas/genkey.git</connection>
+        <developerConnection>scm:git:git@github.com:realpaas/genkey.git</developerConnection>
+        <url>https://github.com/realpaas/genkey</url>
+    </scm>
+
     <dependencies>
         <dependency>
             <groupId>commons-logging</groupId>
